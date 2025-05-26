@@ -1,3 +1,5 @@
+mod mmap;
+
 use std::io::{Read, Write};
 use std::{collections::HashMap, hash::Hash, io, path::PathBuf};
 
