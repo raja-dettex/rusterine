@@ -1,19 +1,18 @@
 mod page;
 mod storage;
+mod journal;
 
 use std::io::{Read, Write};
 use std::ops::Add;
 use std::{collections::HashMap, hash::Hash, io, path::PathBuf};
 
-use bincode::error::DecodeError;
-use bincode::Decode;
-use serde::{Deserialize, Serialize};
+
 use storage::SegmentStore;
 use unicode_segmentation::UnicodeSegmentation;
 use std::path::Path;
-use std::fs::{File, OpenOptions};
+
 type DocumentId = usize;
-type WeightedDocumentIds = (usize, Vec<DocumentId>);
+
 #[derive(Debug)]
 struct InvertedIndex { 
     pub index : HashMap<String, Vec<DocumentId>>,
@@ -31,7 +30,7 @@ impl InvertedIndex {
     pub fn new() -> Self { 
         let dir_path = Path::new("./segments");
         let path = Path::new("./segments/index.seg");
-        std::fs::create_dir_all(dir_path);
+        let _ = std::fs::create_dir_all(dir_path);
         Self { index : HashMap::new(),
             weights: HashMap::new(), 
             docs: HashMap::new(),
@@ -47,7 +46,7 @@ impl InvertedIndex {
 
     pub fn evict(&mut self) { 
         println!("evicting");
-        if let Some((term, used)) = self.weights.iter().min_by_key(|(term, used)| *used)
+        if let Some((term, _)) = self.weights.iter().min_by_key(|(_, used)| *used)
         .map(|(term,used)| (term.to_string(), *used)) { 
             self.weights.remove(&term);
             self.index.remove(&term);
@@ -83,7 +82,7 @@ impl InvertedIndex {
         for (term, docs) in self.index.clone() { 
             let mut buf = vec![0u8; 1024];
             if let Ok(size) = bincode::encode_into_slice(docs, &mut buf, config){ 
-                self.segment_store.write(term, &buf[..size]);
+                let _ = self.segment_store.write(term, &buf[..size]);
             } 
         }
         Ok(())
