@@ -3,3 +3,7 @@
 /src/**.txt
 .gitignores
 index.bins
+logger
+segments
+docs.bins
+wal.bin
